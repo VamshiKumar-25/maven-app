@@ -7,12 +7,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', url: 'https://github.com/VamshiKumar-25/maven-app'
-            }
-        }
-
         stage('Build Maven Project') {
             steps {
                 dir('maven-app') {
@@ -21,11 +15,13 @@ pipeline {
             }
         }
 
-
         stage('Build Docker Image') {
             steps {
-                script {
-                    dockerImage = docker.build("${IMAGE_NAME}:latest")
+                dir('maven-app') {
+                    script {
+                        def dockerImage = docker.build("${IMAGE_NAME}:latest")
+                        env.DOCKER_IMAGE = dockerImage.id
+                    }
                 }
             }
         }
@@ -34,7 +30,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerHub') {
-                        dockerImage.push("latest")
+                        docker.image("${IMAGE_NAME}:latest").push("latest")
                     }
                 }
             }
